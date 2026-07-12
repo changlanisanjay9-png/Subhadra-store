@@ -43,6 +43,18 @@
   }
   .add-btn:disabled { background: #ccc; }
   .out-of-stock { font-size: 11px; color: #d9534f; font-weight: 700; margin-bottom: 6px; }
+  .tryon-btn {
+    width: 100%; padding: 8px; background: #fff; color: #B03060; border: 1px solid #B03060;
+    border-radius: 6px; font-size: 13px; font-weight: 700; margin-top: 6px;
+  }
+  .photo-input {
+    width: 100%; padding: 10px; border: 1px dashed #ccc; border-radius: 8px;
+    margin-bottom: 12px; font-size: 13px;
+  }
+  .generate-btn {
+    width: 100%; padding: 12px; background: #B03060; color: #fff; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 700; margin-bottom: 10px;
+  }
 
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 30;
@@ -96,6 +108,17 @@
 <button class="cart-btn" id="cartBtn" onclick="openCart()">
   🛒 Cart <span class="cart-count" id="cartCount">0</span>
 </button>
+
+<div class="modal-overlay" id="tryonModal">
+  <div class="modal">
+    <h2>✨ Virtual Try-On</h2>
+    <p style="font-size:13px; color:#888; margin-bottom:10px;">Upload a clear, front-facing photo of yourself</p>
+    <input type="file" accept="image/*" id="tryonPhotoInput" class="photo-input" />
+    <button class="generate-btn" onclick="generateTryOn()">Generate</button>
+    <div id="tryonResult"></div>
+    <button class="close-btn" onclick="closeTryOn()">Close</button>
+  </div>
+</div>
 
 <div class="modal-overlay" id="cartModal">
   <div class="modal">
@@ -151,9 +174,68 @@
             ? `<button class="add-btn" onclick="addToCart('${p.id}')">Add to Cart</button>`
             : `<div class="out-of-stock">Out of stock</div><button class="add-btn" disabled>Add to Cart</button>`
           }
+          <button class="tryon-btn" onclick="openTryOn('${p.id}')">✨ Try It On</button>
         </div>
       </div>
     `).join('');
+  }
+
+  const TRYON_FUNCTION_URL = 'https://fvctacaraxichxwrvinq.supabase.co/functions/v1/virtual-tryon';
+  let tryOnProductId = null;
+
+  function openTryOn(id) {
+    tryOnProductId = id;
+    document.getElementById('tryonResult').innerHTML = '';
+    document.getElementById('tryonPhotoInput').value = '';
+    document.getElementById('tryonModal').classList.add('open');
+  }
+
+  function closeTryOn() {
+    document.getElementById('tryonModal').classList.remove('open');
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function generateTryOn() {
+    const fileInput = document.getElementById('tryonPhotoInput');
+    const resultBox = document.getElementById('tryonResult');
+    if (!fileInput.files.length) {
+      alert('Please upload your photo first.');
+      return;
+    }
+    const product = products.find(p => p.id === tryOnProductId);
+    if (!product) return;
+
+    resultBox.innerHTML = '<p style="text-align:center; color:#999;">Generating... this takes a few seconds ✨</p>';
+
+    try {
+      const personBase64 = await fileToBase64(fileInput.files[0]);
+
+      const res = await fetch(TRYON_FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          personImageUrl: personBase64,
+          garmentImageUrl: product.image_url,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.output && data.output[0]) {
+        resultBox.innerHTML = `<img src="${data.output[0]}" style="width:100%; border-radius:10px;" />`;
+      } else {
+        resultBox.innerHTML = '<p style="text-align:center; color:#d9534f;">Could not generate try-on. Please try a clearer photo.</p>';
+      }
+    } catch (err) {
+      resultBox.innerHTML = '<p style="text-align:center; color:#d9534f;">Something went wrong. Please try again.</p>';
+    }
   }
 
   document.getElementById('search').addEventListener('input', (e) => {
