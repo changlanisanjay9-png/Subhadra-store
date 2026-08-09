@@ -5,6 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Subhadra Family Fashion</title>
 <style>
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.lightbox-overlay.active {
+  display: flex;
+}
+.lightbox-overlay img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 8px;
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px; right: 25px;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+}
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.lightbox-overlay.active {
+  display: flex;
+}
+.lightbox-overlay img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 8px;
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px; right: 25px;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+}
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #fdf6f8; color: #333; }
   header {
@@ -134,6 +188,13 @@
 </div>
 
 <script>
+  function openLightbox(imgSrc) {
+  document.getElementById('lightboxImg').src = imgSrc;
+  document.getElementById('lightboxOverlay').classList.add('active');
+}
+  function closeLightbox() {
+  document.getElementById('lightboxOverlay').classList.remove('active');
+}
   const SUPABASE_URL = 'https://fvctacaraxichxwrvinq.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cM4_inx6hogIiwVStryLpw_sxDC4qkH';
   const WHATSAPP_NUMBER = '919765353867';
@@ -165,8 +226,7 @@
     }
     grid.innerHTML = list.map(p => `
       <div class="card">
-        <img src="${p.image_url || 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(p.name)}" alt="${p.name}" />
-        <div class="card-body">
+<img src="${p.image_url || 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(p.name)}" alt="${p.name}" onclick="openLightbox('${p.image_url || 'https://via.placeholder.com/300x300?text=' + encodeURIComponent(p.name)}')" style="cursor:pointer;" />        <div class="card-body">
           <div class="card-name">${p.name}</div>
           <div class="card-cat">${p.category || ''}</div>
           <div class="card-price">₹${p.sell_price}</div>
@@ -324,6 +384,9 @@
 
   fetchProducts();
 </script>
-
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <img id="lightboxImg" src="" alt="Product">
+</div>
 </body>
 </html>
